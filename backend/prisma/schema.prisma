@@ -1,0 +1,138 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+  // output   = "../src/generated/prisma"
+  url = env("DATABASE_URL")
+}
+
+datasource db {
+  provider = "mongodb"
+}
+
+model User {
+  id               String           @id @default(auto()) @map("_id") @db.ObjectId
+  name             String
+  email            String           @unique
+  password         String?
+  location         String           @default("Jodhpur")
+  profilePic       String?
+  bio              String
+  aboutMe          String[]         @default([])
+  interests        String[]         @default([])
+  lookingTo        String[]         @default([])
+  userOnGroups     UserOnGroup[]
+  rsvps            RSVP[]           @relation("UserRSVPs")
+  userConnectionsA UserConnection[] @relation("UserConnectionA")
+  userConnectionB  UserConnection[] @relation("UserConnectionB")
+  discussions      Discussion[]     @relation("UserDiscussions")
+  groupsCreated    Group[]          @relation("GroupCreator")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+
+  @@map("users")
+}
+
+model Group {
+  id           String        @id @default(auto()) @map("_id") @db.ObjectId
+  name    String
+  description  String?
+  banner       String?
+  location     String?
+  topics       String[]      @default([])
+  creatorId    String        @db.ObjectId
+  creator      User          @relation("GroupCreator", fields: [creatorId], references: [id])
+  userOnGroups UserOnGroup[]
+  events       Event[]       @relation("GroupEvents")
+  discussions  Discussion[]  @relation("GroupDiscussions")
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @default(now())
+
+  @@map("groups")
+}
+
+model UserOnGroup {
+  id       String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId   String   @db.ObjectId
+  groupId  String   @db.ObjectId
+  user     User     @relation(fields: [userId], references: [id])
+  group    Group    @relation(fields: [groupId], references: [id])
+  role     String   @default("member") // "admin" or "member"
+  joinedAt DateTime @default(now())
+
+  @@map("user_on_groups")
+}
+
+model UserConnection {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  userAId     String   @db.ObjectId
+  userBId     String   @db.ObjectId
+  userA       User     @relation("UserConnectionA", fields: [userAId], references: [id])
+  userB       User     @relation("UserConnectionB", fields: [userBId], references: [id])
+  connectedAt DateTime @default(now())
+
+  @@unique([userAId, userBId])
+  @@map("user_connections")
+}
+
+model Event {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  title           String
+  description     String?
+  startDate       DateTime
+  endDate         DateTime
+  eventType       String   @default("in_person")
+  location        String
+  hostId          String   @db.ObjectId
+  coHostId        String[] @default([]) @db.ObjectId
+  groupId         String   @db.ObjectId
+  group           Group    @relation("GroupEvents", fields: [groupId], references: [id])
+  hasFee          Boolean  @default(false)
+  feeAmount       Float?
+  featuredPhoto   String?
+  topics          String[] @default([])
+  hasQuestions    Boolean  @default(false)
+  questionPrompt  String?
+  attendeeLimit   Int?
+  allowGuestHouse Int?     @default(0)
+  status          String   @default("published")
+  rsvps           RSVP[]   @relation("EventRSVPs")
+  attendees       Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("events")
+}
+
+model RSVP {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  eventId   String   @db.ObjectId
+  status    String   @default("going")
+  user      User     @relation("UserRSVPs", fields: [userId], references: [id])
+  event     Event    @relation("EventRSVPs", fields: [eventId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@map("rsvps")
+}
+
+model Discussion {
+  id           String       @id @default(auto()) @map("_id") @db.ObjectId
+  title        String?
+  content      String
+  userId       String       @db.ObjectId
+  groupId      String       @db.ObjectId
+  parentId     String?      @db.ObjectId
+  user         User         @relation("UserDiscussions", fields: [userId], references: [id])
+  group        Group        @relation("GroupDiscussions", fields: [groupId], references: [id])
+  parent      Discussion?   @relation("DiscussionReplies", fields: [parentId], references: [id] , onDelete : NoAction , onUpdate : NoAction)
+  replies      Discussion[] @relation("DiscussionReplies")
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  @@map("discussions")
+}
