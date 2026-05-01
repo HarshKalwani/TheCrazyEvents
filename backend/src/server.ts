@@ -1,15 +1,14 @@
+import "dotenv/config";
 import app from './app';
 import { PrismaClient } from '@prisma/client';
 import { Prisma } from '@prisma/client';
-import dotenv from 'dotenv';
-
-dotenv.config();
 
 const prisma = new PrismaClient({
   log: ['query', 'info', 'warn', 'error'],
 });
 
 const PORT = process.env.PORT;
+console.log("DB:", process.env.DATABASE_URL);
 
 async function withRetry<T>(
   fn: () => Promise<T>,

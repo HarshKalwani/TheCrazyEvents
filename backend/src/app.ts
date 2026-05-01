@@ -3,7 +3,7 @@ import cors from 'cors';
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 import { logger } from './utils/logger';
-
+import authRoutes from './routes/v1/auth.routes';
 const app = express();
 app.use(helmet());
 app.use(cors());
@@ -15,6 +15,8 @@ const limiter = rateLimit({
   max: 100,
   message: 'Too many requests from this IP, please try again later.',
 });
+
+app.use("/api/v1/auth", authRoutes);
 
 
 //response logging middleware 
@@ -32,8 +34,8 @@ app.use((req, res, next) => {
   next();
 });
 
-const port = process.env.PORT || 3000;
-app.listen(port,() => {
-    console.log(`Server is running on port ${port}`)
-})
+// const port = process.env.PORT || 3000;
+// app.listen(port,() => {
+//     console.log(`Server is running on port ${port}`)
+// })
 export default app;
