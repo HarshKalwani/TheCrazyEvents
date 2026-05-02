@@ -4,10 +4,11 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { RootRoutes } from '../Routes';
 import AuthNavigator from './AuthNavigator';
 import MainStackNavigation from './MainStackNavigator';
+import { useAuthStore } from '../../store/useAuthStore';
 
 const RootNavigator = () => {
   const Stack = createNativeStackNavigator();
-  const isAuthenticated = false
+ const {isAuthenticated} = useAuthStore();
   return (
     <Stack.Navigator screenOptions={{headerShown:false}}>
       {isAuthenticated ? (

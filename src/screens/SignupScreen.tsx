@@ -13,6 +13,8 @@ import { Controller, useForm } from 'react-hook-form';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import BouncyCheckbox from 'react-native-bouncy-checkbox';
+import { signUp } from '../api/apiClient';
+import { useAuthStore } from '../store/useAuthStore';
 
 type FormValues = {
   name: string;
@@ -24,6 +26,7 @@ type FormValues = {
 };
 
 const SignupScreen = () => {
+  const { setAuth } = useAuthStore();
   const { control, handleSubmit, watch, formState } = useForm({
     defaultValues: {
       name: '',
@@ -44,6 +47,23 @@ const SignupScreen = () => {
     const threshold = [3, 6, 8, 10];
     return threshold.map(t => len >= t);
   }, [password]);
+
+  const onSubmit = async (data: FormValues) => {
+    try {
+      setErrorMsg(null);
+      console.log('Signup request data', data);
+      const { accessToken , refreshToken, user } = await signUp({
+        name: data.name,
+        email: data.email,
+        password: data.password,
+      });
+      console.log('Signup response', { accessToken, refreshToken, user });
+      setAuth(user , accessToken , refreshToken);
+    } catch (error: any) {
+      console.error(error.message);
+      setErrorMsg(error.message);
+    }
+  };
 
   return (
     <SafeAreaView className="flex-1 bg-[#fbfbfb]">
@@ -74,7 +94,7 @@ const SignupScreen = () => {
                     placeholder="Enter name"
                     value={value}
                     onBlur={onBlur}
-                    onChange={onChange}
+                    onChangeText={onChange}
                     className="text-base text-gray-900"
                     placeholderTextColor={'#9CA3AF'}
                   />
@@ -102,7 +122,7 @@ const SignupScreen = () => {
               rules={{
                 required: 'email is required',
                 pattern: {
-                  value: /^\S+@\S+\.\S=$/,
+                  value: /^\S+@\S+\.\S+$/,
                   message: 'Enter a valid email',
                 },
               }}
@@ -112,7 +132,7 @@ const SignupScreen = () => {
                     placeholder="example@email.com"
                     value={value}
                     onBlur={onBlur}
-                    onChange={onChange}
+                    onChangeText={onChange}
                     className="text-base text-gray-900"
                     placeholderTextColor={'#9CA3AF'}
                     keyboardType="email-address"
@@ -200,7 +220,7 @@ const SignupScreen = () => {
                     placeholder=""
                     value={value}
                     onBlur={onBlur}
-                    onChange={onChange}
+                    onChangeText={onChange}
                     className="text-base text-gray-900"
                     placeholderTextColor={'#9CA3AF'}
                   />
@@ -289,6 +309,7 @@ const SignupScreen = () => {
 
           <TouchableOpacity
             className={`py-4 rounded-full mb-4 items-center ${isValid ? 'bg-gray-900' : 'bg-gray-200'}`}
+            onPress={handleSubmit(onSubmit)}
           >
             <Text
               className={`text-lg font-semibold ${isValid ? 'text-white' : 'text-gray-500'}`}

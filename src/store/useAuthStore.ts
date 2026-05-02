@@ -23,7 +23,7 @@ type AuthState = {
   accessToken: string | null;
   refreshToken: string | null;
   isAuthenticated: boolean;
-  setAuth: (user: User, accessToken: string, refreshToken: string) => void;
+  setAuth: (user: User, accessToken: string, refreshToken?: string) => void;
   logout: () => void;
   setAccessToken: (accessToken: string) => void;
   updateUser: (updatedUser: Partial<User>) => void;

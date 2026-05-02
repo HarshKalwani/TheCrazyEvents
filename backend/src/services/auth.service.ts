@@ -15,6 +15,15 @@ export const signUpWithEmail = async (data: {
   location?: string | null;
 }) => {
   const { name, email, password, location } = data;
+
+  const existingUser = await prisma.user.findUnique({
+    where: { email },
+  });
+
+  if (existingUser) {
+    throw new Error('Email already registered');
+  }
+
   const hashedPassword = await bcrypt.hash(password, 10);
   const user = await prisma.user.create({
     data: {
@@ -70,7 +79,7 @@ export const loginWithEmail = async (data: {
 export const loginWithGoogle = async (idToken: string) => {
   const ticket = await googleClient.verifyIdToken({
     idToken,
-    audience: process.env.GOOGLE_CLIENT_ID || '',
+    audience: process.env.GOOGLE_CLIENT_ID!,
   });
 
   const payload = ticket.getPayload();
@@ -79,16 +88,16 @@ export const loginWithGoogle = async (idToken: string) => {
   }
   let user = await prisma.user.findUnique({
     where: {
-      email: payload.email || '',
+      email: payload.email!,
     },
   });
 
   if (!user) {
     user = await prisma.user.create({
       data: {
-        name: payload?.name || "",
-        email: payload?.email || "",
-        profilePic: payload.picture || "",
+        name: payload?.name!,
+        email: payload?.email!,
+        profilePic: payload.picture!,
       },
     });
   }
@@ -119,6 +128,7 @@ export const generateRefreshToken = (userId: string) => {
 export const refreshAccessToken = async (refreshToken: string) => {
   try {
     const decoded = jwt.verify(refreshToken, JWT_SECRET) as { id: string };
+    return generateAccessToken(decoded.id);
   } catch {
     throw new Error('Invalid refresh token');
   }
