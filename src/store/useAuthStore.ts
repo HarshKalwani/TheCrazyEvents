@@ -12,7 +12,7 @@ export interface User {
   bio?: string;
   aboutMe?: string[];
   interests?: string[];
-  lookingTo?: string;
+  lookingTo?: string[];
   groupsCount?: number;
   interestsCount?: number;
   rsvpsCount?: number;

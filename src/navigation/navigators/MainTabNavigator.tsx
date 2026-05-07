@@ -15,7 +15,7 @@ const Tab = createBottomTabNavigator<MainTabsParamList>();
 const MainTabNavigator = () => {
   return (
     <Tab.Navigator
-      initialRouteName={MainRoutes.Explore}
+      initialRouteName={MainRoutes.Home}
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarIcon: ({ color, size }) => {
