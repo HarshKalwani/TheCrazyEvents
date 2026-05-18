@@ -102,3 +102,16 @@ export const login = async (data: { email: string; password: string }) =>
 export const googleLogin = async (idToken:string) => (
     await api.post('/auth/google-login', { idToken })
 ).data;
+
+export const fetchProfile = async() => (
+  await api.get('/users/profile')
+).data;
+
+export const updateProfile = async (data:{
+  bio?:string;
+  lookingTo?:string[];
+  interests?:string[];
+  aboutMe?:string[]
+}) => (
+  await api.patch("/users/profile",data)
+).data;

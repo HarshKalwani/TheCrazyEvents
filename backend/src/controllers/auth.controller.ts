@@ -2,7 +2,7 @@ import { PrismaClient } from '@prisma/client';
 import { type Request, type Response } from 'express';
 import { z, ZodError } from 'zod';
 import { logger } from '../utils/logger';
-import { loginWithGoogle, refreshAccessToken, signUpWithEmail } from '../services/auth.service';
+import { loginWithEmail, loginWithGoogle, refreshAccessToken, signUpWithEmail } from '../services/auth.service';
 
 const prisma = new PrismaClient();
 
@@ -50,14 +50,32 @@ export const signUp = async (req: Request, res: Response) => {
   }
 };
 
-const loginSchema = z.object({
+export const loginSchema = z.object({
   email: z.email('Invalid email address'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
 });
 
 export const login = async (req: Request, res: Response) => {
   try {
-    // const validateData = loginSchema.parse(req.body);
+    const validateData = loginSchema.parse(req.body);
+    const {accessToken, refreshToken, isOrganizer} = await loginWithEmail(validateData);
+    const user = await prisma.user.findUnique({
+      where:{
+        email:validateData.email
+      },
+      select:{
+        id:true,
+        name:true,
+        email:true,
+        location:true,
+      }
+    })
+    return res.json({
+      accessToken,
+      refreshToken,
+      isOrganizer,
+      user
+    });
   } catch (error:any) {
     if (error instanceof ZodError) {
       return res.status(400).json({

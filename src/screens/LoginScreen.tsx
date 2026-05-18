@@ -123,7 +123,7 @@ const LoginScreen = () => {
               rules={{
                 required: 'Email is Required',
                 pattern: {
-                  value: /^\S+@\S+\.\S=$/,
+                  value: /^\S+@\S+\.\S+$/,
                   message: 'Enter a valid email',
                 },
               }}

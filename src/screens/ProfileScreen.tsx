@@ -1,6 +1,8 @@
 import {
+  Alert,
   FlatList,
   Image,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -8,14 +10,16 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Feather';
 import { useAuthStore } from '../store/useAuthStore';
 import Icons from 'react-native-vector-icons/Ionicons';
+import { useQuery } from '@tanstack/react-query';
+import { fetchProfile, updateProfile } from '../api/apiClient';
 
 const displayAvatar =
-  'https://upload.wikimedia.org/wikipedia/commons/a/ac/Default_pfp.jpg';
+  'https://cdn.pixabay.com/photo/2023/02/18/11/00/icon-7797704_640.png';
 const predefinedLookingTo = [
   'Practice Hobbies',
   'Socialize',
@@ -63,7 +67,7 @@ const Tag = ({
 );
 
 const ProfileScreen = () => {
-  const { user } = useAuthStore();
+  const { user, updateUser } = useAuthStore();
   const [selectedLookingTo, setSelectedLookingTo] = useState<string[]>(
     user?.lookingTo || [],
   );
@@ -85,7 +89,43 @@ const ProfileScreen = () => {
       prev.includes(item) ? prev.filter(i => i !== item) : [...prev, item],
     );
   };
-  console.log('user>>>>', user);
+  const {
+    data: profileData,
+    isLoading: profileLoading,
+    error: profileError,
+  } = useQuery({
+    queryKey: ['profie'],
+    queryFn: fetchProfile,
+  });
+  console.log('profile', profileData);
+
+  useEffect(() => {
+    if (profileData) {
+      updateUser(profileData);
+      setBio(profileData?.bio || '');
+      setSelectedLookingTo(profileData?.lookingTo || []);
+      setSelectedAboutMe(profileData?.aboutMe || []);
+      setSelectedInterests(profileData?.interests || []);
+    }
+  }, [profileData]);
+
+  const handleSave = async () => {
+    try {
+      const updatedData = {
+        bio,
+        lookingTo: selectedLookingTo,
+        aboutMe: selectedAboutMe,
+        interests: selectedInterests,
+      };
+      const updatedUser = await updateProfile(updatedData);
+      updateUser(updatedUser);
+      setEditing(false);
+    } catch (error) {
+      console.error('Update failed', error);
+      Alert.alert('Save Failed, please try again');
+    }
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-white">
       <ScrollView
@@ -97,7 +137,7 @@ const ProfileScreen = () => {
           {displayAvatar ? (
             <Image
               className="w-full h-full"
-              resizeMode="contain"
+              resizeMode="cover"
               source={{ uri: displayAvatar }}
             />
           ) : (
@@ -111,7 +151,10 @@ const ProfileScreen = () => {
               <Icon name="x" size={20} color={'#fff'} />
             </TouchableOpacity>
             <View className="flex-row gap-2">
-              <TouchableOpacity className="w-9 h-9 rounded-full bg-black/30 items-center justify-center">
+              <TouchableOpacity
+                onPress={() => setEditing(!editing)}
+                className="w-9 h-9 rounded-full bg-black/30 items-center justify-center"
+              >
                 <Icon name="edit-2" size={18} color={'#fff'} />
               </TouchableOpacity>
               <TouchableOpacity className="w-9 h-9 rounded-full bg-black/30 items-center justify-center">
@@ -238,7 +281,7 @@ const ProfileScreen = () => {
           />
         </View>
 
-        <View className="px-5 mt-6">
+        <View className="px-5 mt-6 mb-2">
           <Text className="text-2xl font-extrabold text-gray-900 mb-2">
             About me
           </Text>
@@ -262,7 +305,7 @@ const ProfileScreen = () => {
             scrollEnabled={false}
           />
 
-          <Text className='text-gray-500 mt-4 mb-3 '>
+          <Text className="text-gray-500 mt-4 mb-3 ">
             Introduce yourself to others on meetup. This can be short and simple
           </Text>
           <TextInput
@@ -271,14 +314,35 @@ const ProfileScreen = () => {
             multiline
             editable={editing}
             className="border border-gray-300 rounded-lg p-4 text-gray-700"
-            placeholder='Add your bio'
+            placeholder="Add your bio"
           ></TextInput>
         </View>
         {editing && (
-          <TouchableOpacity className='mx-5 mt-8 bg-teal-600 rounded-lg items-center py-4'>
-            <Text className='text-white font-bold text-lg'>Save Profile</Text>
+          <TouchableOpacity
+            className="mx-5 mt-8 bg-teal-600 rounded-lg items-center py-4"
+            onPress={handleSave}
+          >
+            <Text className="text-white font-bold text-lg">Save Profile</Text>
           </TouchableOpacity>
         )}
+
+        <View className="mt-8 px-5">
+          <Text className="text-2xl font-extrabold text-gray-900 mb-4">
+            Organiser
+          </Text>
+          <Pressable className="flex-row items-center bg-gray-50 rounded-xl p-4  mb-6">
+            <View className="w-12 h-12 rounded-lg bg-gray-200 items-center  justify-center mr-4">
+              <Text className="text-2xl text-gray-500">+</Text>
+            </View>
+            <View className="flex-1">
+              <Text className="text-lg font-semibold text-gray-900">
+                Start a new group
+              </Text>
+              <Text className="text-gray-500">Organise your own events</Text>
+            </View>
+            <Icon name="chevron-right" size={20} color={'#9CA3AF'} />
+          </Pressable>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
